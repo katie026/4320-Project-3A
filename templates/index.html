@@ -1,13 +1,139 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %} {% endblock %}Stock Data Visualizer</title>
+    <style>
+        body {
+            background-color:lightsteelblue;
+        }
 
-{% block content %}
-    <h1>{% block title %} Posts {% endblock %}</h1>
-    {% for post in posts %}
-        <div class='post'>
-            <p>{{ post['created'] }}</p>
-            <h2>{{ post['title'] }}</h2>
-            <p>{{ post['content'] }}</p>
-            <a href="{{ url_for('edit', id=post['id']) }}">Edit</a>
-        </div>
-    {% endfor %}
-{% endblock %}
+        .post {
+            padding: 10px;
+            margin: 5px;
+            background-color: #f3f3f3
+        }
+
+        .alert {
+            padding: 20px;
+            margin: 5px;
+            color: #970020;
+            background-color: #ffd5de;
+        }
+
+        .content-block {
+            background-color: white;
+            border: solid black 1px;
+            width: 75%;
+            padding: 20px;
+            margin: 0 auto;
+        }
+
+        .content-block-title {
+            font-size: 30px;
+            margin-top: 5px;
+            font-family:Arial, Helvetica, sans-serif;
+            text-align: center;
+        }
+
+        .form_label {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        nav a {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 3em;
+            color:darkslategray;
+            margin-top: 10px;
+            margin-left: 10px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+    </nav>
+    <hr>
+    <div class="content">
+        <!-- Section for Alerts -->
+        {% for message in get_flashed_messages() %}
+            <div class="alert">{{ message }}</div>
+        {% endfor %}
+
+        <!-- Section for Content -->
+        {% block content %}
+            <!-- White Block -->
+            <div class="content-block">
+                <!-- Title -->
+                <h1 class="content-block-title">Stock Data Visualizer</h1>
+
+                <!-- Forms -->
+                <form method="POST">
+                    <!-- Choose Symbol -->
+                    <label class="form_label" for="symbol">Choose Symbol:</label>
+                    <select id="symbol" name="symbol">
+                        <option value="">Select a Symbol</option>
+                    </select>
+                    <br>
+                    <!-- dynamically populate Symbols list using javascript -->
+                    <script>
+                        var symbolSelect = document.getElementById('symbol');
+
+                        // array of symbols from app.py
+                        var sp500_symbols = {{ sp500_symbols | tojson }};
+
+                        // loop through symbols and create options
+                        for (var i = 0; i < sp500_symbols.length; i++) {
+                            var option = document.createElement('option');
+                            option.value = sp500_symbols[i];
+                            option.text = sp500_symbols[i];
+                            symbolSelect.add(option);
+                        }
+                    </script>
+                    
+                    <!-- Choose Chart Type -->
+                    <label class="form_label" for="chart_type">Choose Chart Type:</label>
+                    <select id="chart_type" name="chart_type">
+                        <option value="">Select a Chart Type</option>
+                        <option value="Bar">1. Bar</option>
+                        <option value="Line">2. Line</option>
+                    </select>
+                    <br>
+                    
+                    <!-- Choose Time Series -->        
+                    <label class="form_label" for="time_series">Choose Time Series:</label>
+                    <select id="time_series" name="time_series">
+                        <option value="">Select a Time Series</option>
+                        <option value="TIME_SERIES_INTRADAY">1. Intraday</option>
+                        <option value="DAILY">2. Daily</option>
+                        <option value="WEEKLY">3. Weekly</option>
+                        <option value="MONTHLY">4. Monthly</option>
+                    </select>
+                    <br>
+                    
+                    <!-- Choose Start Date -->
+                    <label class="form_label" for="start_date">Start Date:</label>
+                    <input type="date" class="form_label" name="start_date" id="start_date" required>
+                    <br>
+                    
+                    <!-- Choose End Date -->                    
+                    <label class="form_label" for="end_date">End Date:</label>
+                    <input type="date" class="form_label" name="end_date" id="end_date" required>
+                    <br>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit">Submit</button>
+                </form>
+
+                <!-- Section for Chart
+                <div id="chart">
+                    <embed type="image/svg+xml" src= {{ chart|safe }} />
+                </div> -->
+            </div>
+        {% endblock %}
+    </div>
+</body>
+</html>

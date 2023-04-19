@@ -4,8 +4,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: flask_blog_class_image
-    container_name: flask-blog-class-container
+    image: project_3a_image
+    container_name: project-3a-container
     ports:
       - "5003:5000"
     volumes:

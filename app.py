@@ -1,122 +1,55 @@
-import sqlite3
 from flask import Flask, render_template, request, url_for, flash, redirect, abort
+import stockVisualizer
+import symbols
+from datetime import datetime
 
 # make a Flask application object called app
 app = Flask(__name__)
 app.config["DEBUG"] = True
 
-#flash  the secret key to secure sessions
+#flash the secret key to secure sessions
 app.config['SECRET_KEY'] = 'your secret key'
 
-# Function to open a connection to the database.db file
-def get_db_connection():
-    # create connection to the database
-    conn = sqlite3.connect('database.db')
-    
-    # allows us to have name-based access to columns
-    # the database connection will return rows we can access like regular Python dictionaries
-    conn.row_factory = sqlite3.Row
-
-    #return the connection object
-    return conn
-
-## function to get a post
-def get_post(post_id):
-    #get a database connection
-    conn = get_db_connection()
-    post = conn.execute('SELECT * FROM posts WHERE id = ?', (post_id,)).fetchone()
-    conn.close()
-
-    if post is None:
-        abort(404)
-    
-    return post
-
-
-# use the app.route() decorator to create a Flask view function called index()
-@app.route('/')
+# route for the stock user input form
+@app.route('/', methods=('GET', 'POST'))
 def index():
-    #get a database connection
-    conn = get_db_connection()
+    if request.method == "GET":
+        # get SP500 symbol list
+        sp500_symbols = symbols.getSP500SymbolsFromWiki()
+        # pass SP500 symbol list to index.html template as a variable
+        return render_template('index.html', sp500_symbols=sp500_symbols)
 
-    #execute an sql query to select all entries from the posts table
-    #use fetchall() to get all of the rows of the query result
-    posts = conn.execute('SELECT * FROM posts').fetchall()
+    if request.method == "POST":
+        # get form data
+        symbol = request.form["symbol"]
+        chart_type = request.form["chart_type"]
+        time_series = request.form["time_series"]
 
-    #close the connection  
-    conn.close()
-    
-    return render_template('index.html', posts=posts)
-
-@app.route('/create/', methods=('GET', 'POST'))
-def create():
-    if request.method == 'POST':
-        #get title and content
-        title = request.form['title']
-        content = request.form['content']
-
-        #display error if title of content not submitted
-        #otherwise make database connection and insert the content
-        if not title:
-            flash('Title is required!')
-        elif not content:
-            flash('Content is required!')
+        date_format = "%Y-%m-%d"
+        start_date = datetime.strptime(request.form.get("start_date", ""), date_format)
+        end_date = datetime.strptime(request.form.get("end_date", ""), date_format)
+        
+        # validate form data and flash error message if error
+        if symbol == "":
+            flash("Symbol is required.")
+        elif(chart_type == ""):
+            flash("Chart Type is required.")
+        elif(time_series == ""):
+            flash("Time Series is required.")
+        elif(start_date == ""):
+            flash("Start Date is required.")
+        elif(end_date == ""):
+            flash("End Date is required.")
+        elif(start_date < end_date):
+            flash("Start Date cannot be later than End Date.")
         else:
-            conn = get_db_connection()
-            conn.execute('INSERT INTO posts (title, content) VALUES (?, ?)', (title, content))
-            conn.commit()
-            conn.close()
-            return redirect(url_for('index'))
+            # if no errors, query the API
+            stocksDictionary = stockVisualizer.getData(time_series, symbol)
+            stockVisualizer.generateGraph(symbol, time_series, chart_type, stocksDictionary, start_date, end_date)
 
-    return render_template('create.html')
-
-#route to edit post
-@app.route('/<int:id>/edit/', methods=('GET', 'POST'))
-def edit(id):
-    post = get_post(id)
-
-    if request.method == 'POST':
-        #get title and content
-        title = request.form['title']
-        content = request.form['content']
-
-        #display error if title of content not submitted
-        #otherwise make database connection and insert the content
-        if not title:
-            flash('Title is required!')
-        elif not content:
-            flash('Content is required!')
-        else:
-            conn = get_db_connection()
-            conn.execute('UPDATE posts SET title = ?, content = ? WHERE id = ?', (title, content, id))
-            conn.commit()
-            conn.close()
-            return redirect(url_for('index'))
-
-
-    return render_template('edit.html', post=post)
-
-# route to delete a post
-@app.route('/<int:id>/delete/', methods=('POST',))
-def delete(id):
-    #get post
-    post = get_post(id)
-
-    #connect to database
-    conn = get_db_connection()
-
-    #run the delete query
-    conn.execute('DELETE FROM POSTS WHERE id = ?', (id,))
-
-    #commit the changes and close the connection
-    conn.commit()
-    conn.close()
-
-    #show deletes successful message
-    flash('"{}" was successfully deleted!'.format(post['title']))
-    
-    #go to index page after delete
-    return redirect(url_for('index'))
-
+        # render index.html and pass SP500 symbol list to index.html template as a variable
+        return render_template('index.html', sp500_symbols=sp500_symbols)
+        
+    return render_template('index.html')
 
 app.run(host="0.0.0.0")
