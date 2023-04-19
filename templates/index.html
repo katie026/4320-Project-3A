@@ -2,16 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %} {% endblock %}Stock Data Visualizer</title>
+    <title>{% block title %}{% endblock %}Stock Data Visualizer</title>
     <style>
         body {
             background-color:lightsteelblue;
         }
 
-        .post {
-            padding: 10px;
-            margin: 5px;
-            background-color: #f3f3f3
+        nav a {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 3em;
+            color:darkslategray;
+            margin-top: 10px;
+            margin-left: 10px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            text-decoration: none;
+        }
+
+        hr {
+            border-color: black;
         }
 
         .alert {
@@ -38,17 +47,16 @@
 
         .form_label {
             font-family: Arial, Helvetica, sans-serif;
+            font-size: medium;
         }
 
-        nav a {
+        .select_input, .date_input {
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 3em;
-            color:darkslategray;
-            margin-top: 10px;
-            margin-left: 10px;
-            margin-top: 15px;
-            margin-bottom: 15px;
-            text-decoration: none;
+            font-size: small;
+        }
+
+        #graph {
+            padding: 10px;
         }
     </style>
 </head>
@@ -74,29 +82,18 @@
                 <form method="POST">
                     <!-- Choose Symbol -->
                     <label class="form_label" for="symbol">Choose Symbol:</label>
-                    <select id="symbol" name="symbol">
+                    <select class="select_input" id="symbol" name="symbol">
                         <option value="">Select a Symbol</option>
+                        <!-- Loop through sp500_symbols and create options -->
+                        {% for symbol in sp500_symbols %}
+                            <option value="{{ symbol }}">{{ symbol }}</option>
+                        {% endfor %}
                     </select>
                     <br>
-                    <!-- dynamically populate Symbols list using javascript -->
-                    <script>
-                        var symbolSelect = document.getElementById('symbol');
-
-                        // array of symbols from app.py
-                        var sp500_symbols = {{ sp500_symbols | tojson }};
-
-                        // loop through symbols and create options
-                        for (var i = 0; i < sp500_symbols.length; i++) {
-                            var option = document.createElement('option');
-                            option.value = sp500_symbols[i];
-                            option.text = sp500_symbols[i];
-                            symbolSelect.add(option);
-                        }
-                    </script>
                     
                     <!-- Choose Chart Type -->
                     <label class="form_label" for="chart_type">Choose Chart Type:</label>
-                    <select id="chart_type" name="chart_type">
+                    <select class="select_input" id="chart_type" name="chart_type">
                         <option value="">Select a Chart Type</option>
                         <option value="Bar">1. Bar</option>
                         <option value="Line">2. Line</option>
@@ -105,33 +102,34 @@
                     
                     <!-- Choose Time Series -->        
                     <label class="form_label" for="time_series">Choose Time Series:</label>
-                    <select id="time_series" name="time_series">
+                    <select class="select_input" id="time_series" name="time_series">
                         <option value="">Select a Time Series</option>
                         <option value="TIME_SERIES_INTRADAY">1. Intraday</option>
-                        <option value="DAILY">2. Daily</option>
-                        <option value="WEEKLY">3. Weekly</option>
-                        <option value="MONTHLY">4. Monthly</option>
+                        <option value="TIME_SERIES_DAILY_ADJUSTED">2. Daily</option>
+                        <option value="TIME_SERIES_WEEKLY">3. Weekly</option>
+                        <option value="TIME_SERIES_MONTHLY">4. Monthly</option>
                     </select>
                     <br>
                     
                     <!-- Choose Start Date -->
                     <label class="form_label" for="start_date">Start Date:</label>
-                    <input type="date" class="form_label" name="start_date" id="start_date">
+                    <input type="date" class="date_input" name="start_date" id="start_date">
                     <br>
                     
                     <!-- Choose End Date -->                    
                     <label class="form_label" for="end_date">End Date:</label>
-                    <input type="date" class="form_label" name="end_date" id="end_date">
+                    <input type="date" class="date_input" name="end_date" id="end_date">
                     <br>
                     
                     <!-- Submit Button -->
                     <button type="submit">Submit</button>
                 </form>
 
-                <!-- Section for Chart
-                <div id="chart">
-                    <embed type="image/svg+xml" src= {{ chart|safe }} />
-                </div> -->
+                <!-- Section for Graph -->
+                <div id="graph">
+                    <!-- Display the graph using the SVG representation -->
+                    {{ graph_svg|safe }}
+                </div>
             </div>
         {% endblock %}
     </div>

@@ -45,13 +45,21 @@ def index():
         elif(end_date <= start_date):
             flash("End Date must be after Start Date.")
         else:
-            # if no errors, query the API
-            stocksDictionary = stockVisualizer.getData(time_series, symbol)
-            stockVisualizer.generateGraph(symbol, time_series, chart_type, stocksDictionary, start_date, end_date)
+            # get SP500 symbol list
+            sp500_symbols = symbols.getSP500SymbolsFromWiki()
+
+            # use stockVisualizer to get the pygal graph
+            stocksData = stockVisualizer.getData(time_series, symbol)
+            graph = stockVisualizer.generateGraph(symbol, time_series, chart_type, stocksData, start_date, end_date)
+            # Render the graph as an SVG image and remove newline characters
+            graph_svg = graph.render().decode('utf-8').strip()
+
+            # pass SP500 symbol list and graph SVG image to index.html template
+            return render_template('index.html', sp500_symbols=sp500_symbols, graph_svg=graph_svg)
         
         # get SP500 symbol list
         sp500_symbols = symbols.getSP500SymbolsFromWiki()
-        # render index.html and pass SP500 symbol list to index.html template as a variable
+        # pass SP500 symbol list to index.html template
         return render_template('index.html', sp500_symbols=sp500_symbols)
         
     return render_template('index.html')

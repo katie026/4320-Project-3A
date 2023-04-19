@@ -1,6 +1,5 @@
-# this code requires pip pygal, lxml, and requests
+from flask import Flask, render_template, request, flash
 import pygal, lxml, requests
-# and also datetime
 from datetime import datetime
 
 def getData(timeSeries, symbol):
@@ -21,25 +20,32 @@ def getData(timeSeries, symbol):
         stocksDictionary = alphavantageRequest.json()
         return stocksDictionary
     else:
-        print("Error: Request failed")
+        flash("Error: Request failed")
 
 def generateGraph(symbol, timeSeries, chart, stocksDictionary, startDate, endDate):
     # get the name of the data for that time series ex. 'Monthly Time Series'
-    timeSeriesName = list(stocksDictionary)[1]
+    timeSeriesKeys = list(stocksDictionary.keys())
+    if len(timeSeriesKeys) > 1:
+        # timeSeriesName = timeSeriesKeys[1]
+        timeSeriesName = list(stocksDictionary)[1]
 
-    # create a reference to the time series data
-    timeSeriesData = stocksDictionary[timeSeriesName]
+        # create a reference to the time series data
+        timeSeriesData = stocksDictionary[timeSeriesName]
 
-    # name graph
-    displayStartDate = startDate.strftime("%Y/%m/%d")
-    displayEndDate = endDate.strftime("%Y/%m/%d")
-    graphTitle = f"Stock Data for {symbol}: {displayStartDate} to {displayEndDate}"
+        # name graph
+        displayStartDate = startDate.strftime("%Y/%m/%d")
+        displayEndDate = endDate.strftime("%Y/%m/%d")
+        graphTitle = f"Stock Data for {symbol}: {displayStartDate} to {displayEndDate}"
 
-    # create graph based on selected chart
-    if (chart == "Line"):
-        generateLineGraph(timeSeries, timeSeriesData, startDate, endDate, graphTitle)
-    if (chart == "Bar"):
-        generateBarChart(timeSeries, timeSeriesData, startDate, endDate, graphTitle)
+        # create graph based on selected chart
+        if (chart == "Line"):
+            finalGraph = generateLineGraph(timeSeries, timeSeriesData, startDate, endDate, graphTitle)
+            return finalGraph
+        if (chart == "Bar"):
+            finalGraph = generateBarChart(timeSeries, timeSeriesData, startDate, endDate, graphTitle)
+            return finalGraph
+    else:
+        flash("Error: No data in the stocksDictionary")
 
 def generateLineGraph(timeSeries, timeSeriesData, startDate, endDate, graphTitle):
     # list the graph lines
@@ -77,9 +83,7 @@ def generateLineGraph(timeSeries, timeSeriesData, startDate, endDate, graphTitle
     # set x-axis labels
     lineGraph.x_labels = x_labels
 
-    # pass graph to index.html
-    lineGraph = lineGraph.render_data_uri()
-    return render_template( 'index.html', chart = lineGraph)
+    return lineGraph
 
 def generateBarChart(timeSeries, timeSeriesData, startDate, endDate, graphTitle):
     # list the chart labels
@@ -115,6 +119,4 @@ def generateBarChart(timeSeries, timeSeriesData, startDate, endDate, graphTitle)
     # set x-axis labels
     barChart.x_labels = x_labels
     
-    # pass graph to index.html
-    barChart = barChart.render_data_uri()
-    return render_template( 'index.html', chart = barChart)
+    return barChart
