@@ -25,8 +25,9 @@ def getSP500SymbolsFromWiki():
     return sp500_symbols
 
 def get_NYSE_NASDAQ_Symbols():
+    key = 'QY73AL7RJZDQESXX'
     # API request to fetch all stock symbols
-    response = requests.get('https://www.alphavantage.co/query?function=LISTING_STATUS&apikey=QY73AL7RJZDQESXX')
+    response = requests.get(f'https://www.alphavantage.co/query?function=LISTING_STATUS&apikey={key}')
 
     # read response csv text and split the data by lines
     lines = response.text.splitlines()
